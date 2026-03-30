@@ -31,15 +31,23 @@ class Process implements Runnable {
     private int remainingTime; // Time left for the process to finish its execution
 // Feature 1: Process Priority
    private int priority;
+ // Feature 3: Waiting & Turnaround Time
+ private long arrivalTime;
+ private long completionTime;
+ private long waitingTime;
+ private long turnaroundTime;
     // Constructor to initialize the process with name, burst time, and time quantum
 public Process(String name, int burstTime, int timeQuantum, int priority)  {
+
         this.name = name;
         this.burstTime = burstTime;
+        this.arrivalTime = System.currentTimeMillis();
         this.timeQuantum = timeQuantum;
         this.remainingTime = burstTime; // Initially, remaining time is equal to the burst time
         this.priority = priority;
     }
-
+public void calculateWaitingTime() {
+}
 
     // This method will be called when the thread for this process is started
     @Override
@@ -143,10 +151,20 @@ public Process(String name, int burstTime, int timeQuantum, int priority)  {
     return priority;
 }
 
+
     // Check if the process has finished (i.e., no remaining time)
     public boolean isFinished() {
         return remainingTime <= 0;
     }
+    public long getArrivalTime() { return arrivalTime; }
+public void setCompletionTime(long time) { this.completionTime = time; }
+public long getCompletionTime() { return completionTime; }
+public void setWaitingTime(long time) { this.waitingTime = time; }
+public long getWaitingTime() { return waitingTime; 
+}
+public void setTurnaroundTime(long time) { this.turnaroundTime = time; }
+public long getTurnaroundTime() { return turnaroundTime;
+ }
 }
 
 public class SchedulerSimulation {
@@ -172,6 +190,7 @@ static int contextSwitches = 0;
         // Map to associate each thread with its respective process object
         Map<Thread, Process> processMap = new HashMap<>();
         
+        LinkedList<Process> allProcesses = new LinkedList<>();
         // Print simulation header with elegant formatting
         System.out.println("\n" + Colors.BOLD + Colors.BRIGHT_CYAN + 
                           "╔═══════════════════════════════════════════════════════════════════════════════════════╗" + 
@@ -206,7 +225,10 @@ static int contextSwitches = 0;
             
             // Create a new process object with a unique name, burst time, and the defined time quantum
             int priority = 1 + random.nextInt(5);
-            Process process = new Process("P" + i, burstTime, timeQuantum, priority);            
+            Process process = new Process("P" + i, burstTime, timeQuantum, priority);  
+            
+            allProcesses.add(process);
+
             // Add the process to the ready queue and the map
             addProcessToQueue(process, processQueue, processMap);
         }
@@ -227,6 +249,11 @@ static int contextSwitches = 0;
         while (!processQueue.isEmpty()) {
             // Get the next thread from the queue (FIFO)
             Thread currentThread = processQueue.poll(); // Dequeues the next thread
+            // Feature 3: Waiting Time
+            Process current = processMap.get(currentThread);
+            long startTime = System.currentTimeMillis();
+            current.setWaitingTime(startTime - current.getArrivalTime());
+            
             
             // Print the current process queue (list of process IDs in the queue)
             System.out.println(Colors.BOLD + Colors.MAGENTA + "┌─ Ready Queue " + "─".repeat(65) + Colors.RESET);
@@ -254,6 +281,10 @@ static int contextSwitches = 0;
             } catch (InterruptedException e) {
                 System.out.println("Main thread interrupted.");
             }
+            // Feature 3: Completion & Turnaround
+             long completionTime = System.currentTimeMillis();
+             current.setCompletionTime(completionTime);
+             current.setTurnaroundTime(completionTime - current.getArrivalTime());
             
             // Retrieve the process associated with the thread from the map
             Process process = processMap.get(currentThread);
@@ -273,6 +304,13 @@ static int contextSwitches = 0;
                 }
             }
         }
+        // Feature 3: Print Statistics
+System.out.println("\nProcess Statistics:");
+    for (Process p : allProcesses) {
+        System.out.println(p.getName() +
+        " | Waiting: " + p.getWaitingTime() + "ms" +
+        " | Turnaround: " + p.getTurnaroundTime() + "ms");
+}
         
         // End of the scheduler simulation
         System.out.println(Colors.BOLD + Colors.BRIGHT_GREEN + 
