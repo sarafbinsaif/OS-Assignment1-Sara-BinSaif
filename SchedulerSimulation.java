@@ -150,6 +150,8 @@ public Process(String name, int burstTime, int timeQuantum, int priority)  {
 }
 
 public class SchedulerSimulation {
+    // Feature 2: Context Switch Counter
+static int contextSwitches = 0;
     public static void main(String[] args) {
         // ⚠️ IMPORTANT: Put your student ID here to seed the random number generator
         // This makes your output unique to you - DO NOT forget to change this!
@@ -244,6 +246,7 @@ public class SchedulerSimulation {
             
             // Start the thread, which will run the process for one time quantum
             currentThread.start();
+            contextSwitches++;
             
             try {
                 // Wait for the thread to finish its time quantum before continuing to the next process
@@ -295,6 +298,7 @@ public class SchedulerSimulation {
         
         // Map the thread to the process, so we can track the process associated with each thread
         processMap.put(thread, process);
+        System.out.println("Total context switches: " + contextSwitches);
         
         // Print a message indicating the process has entered the ready queue
         System.out.println(Colors.BLUE + "  ➕ " + Colors.BOLD + Colors.CYAN + process.getName() + 
